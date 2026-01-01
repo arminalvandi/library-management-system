@@ -1,19 +1,61 @@
-from flask import Flask
+from flask import Flask, render_template, request, redirect
 import sqlite3
 import os
+from werkzeug.utils import secure_filename
 
-app = Flask(_name_)
+app = Flask(__name__)
 
+# ---------- تنظیمات ----------
 DATABASE_PATH = "database/library.db"
+UPLOAD_FOLDER = "static/photos"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
+# ---------- ساخت پوشه‌ها ----------
+if not os.path.exists("database"):
+    os.makedirs("database")
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+# ---------- اتصال دیتابیس ----------
 def get_db_connection():
     conn = sqlite3.connect(DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
+# ---------- صفحه تست ----------
 @app.route("/")
 def index():
     return "Library Management System Backend Ready"
 
-if _name_ == "_main_":
-    app.run(debug=True
+# ---------- ثبت عضو ----------
+@app.route("/add_member", methods=["GET", "POST"])
+def add_member():
+    if request.method == "POST":
+        name = request.form["name"]
+        code = request.form["code"]
+        grade = request.form["grade"]
+        phone = request.form["phone"]
+
+        photo = request.files["photo"]
+        photo_filename = None
+
+        if photo and photo.filename != "":
+            photo_filename = secure_filename(photo.filename)
+            photo.save(os.path.join(app.config["UPLOAD_FOLDER"], photo_filename))
+
+        conn = get_db_connection()
+        conn.execute("""
+            INSERT INTO members (name, code, grade, phone, photo_path)
+            VALUES (?, ?, ?, ?, ?)
+        """, (name, code, grade, phone, photo_filename))
+        conn.commit()
+        conn.close()
+
+        return redirect("/")
+
+    return render_template("add_member.html")
+
+# ---------- اجرای برنامه ----------
+if __name__ == "__main__":
+    app.run(debug=True)
