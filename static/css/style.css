@@ -1,0 +1,48 @@
+body {
+  margin: 0;
+  font-family: Tahoma, sans-serif;
+  direction: rtl;
+}
+
+/* ===== Dashboard ===== */
+.dashboard {
+  min-height: 100vh;
+  padding: 40px;
+  background: linear-gradient(135deg, #4b0082, #6a0dad, #8a2be2);
+  color: white;
+}
+
+.dashboard h1 {
+  font-size: 32px;
+  margin-bottom: 30px;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 25px;
+}
+
+.card {
+  background: linear-gradient(135deg, #7b2ff7, #9f5cff);
+  border-radius: 18px;
+  padding: 30px;
+  cursor: pointer;
+  transition: all 0.35s ease;
+  box-shadow: 0 15px 35px rgba(0,0,0,0.25);
+}
+
+.card:hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+}
+
+.card h2 {
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.card p {
+  font-size: 15px;
+  opacity: 0.9;
+}
