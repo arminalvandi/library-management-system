@@ -76,5 +76,38 @@ def member_detail(member_id):
     return render_template("member_detail.html", member=member)
 
 # ---------- اجرای برنامه ----------
-if __name__ == "__main__":
+if __name__ == "__main__":@app.route("/edit_member/<int:member_id>", methods=["GET", "POST"])
+def edit_member(member_id):
+    conn = get_db_connection()
+    member = conn.execute(
+        "SELECT * FROM members WHERE id = ?",
+        (member_id,)
+    ).fetchone()
+
+    if request.method == "POST":
+        name = request.form["name"]
+        code = request.form["code"]
+        grade = request.form["grade"]
+        phone = request.form["phone"]
+
+        photo = request.files["photo"]
+        photo_filename = member["photo_path"]
+
+        if photo and photo.filename != "":
+            photo_filename = secure_filename(photo.filename)
+            photo.save(os.path.join(app.config["UPLOAD_FOLDER"], photo_filename))
+
+        conn.execute("""
+            UPDATE members
+            SET name=?, code=?, grade=?, phone=?, photo_path=?
+            WHERE id=?
+        """, (name, code, grade, phone, photo_filename, member_id))
+
+        conn.commit()
+        conn.close()
+
+        return redirect("/members")
+
+    conn.close()
+    return render_template("edit_member.html", member=member)
     app.run(debug=True)
