@@ -111,3 +111,27 @@ body {
   font-size: 15px;
   opacity: 0.9;
 }
+/* ===== Member Detail ===== */
+.profile-card {
+  max-width: 500px;
+  margin: auto;
+  background: linear-gradient(135deg, #7b2ff7, #9f5cff);
+  border-radius: 20px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.35);
+}
+
+.profile-img {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  border: 5px solid white;
+  object-fit: cover;
+  margin-bottom: 20px;
+}
+
+.profile-info p {
+  font-size: 18px;
+  margin: 10px 0;
+}
