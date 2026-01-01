@@ -3,36 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <title>اطلاعات دانش‌آموز</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="../static/css/style.css">
 </head>
 <body>
 
 <div class="page">
+    <h1>👤 {{ member.name }}</h1>
 
-    <h1>📘 اطلاعات دانش‌آموز</h1>
+    <p>کد: {{ member.code }}</p>
+    <p>پایه: {{ member.grade }}</p>
+    <p>شماره تماس: {{ member.phone }}</p>
 
-    <div class="member-card">
+    {% if member.photo_path %}
+        <img src="/static/photos/{{ member.photo_path }}" width="150">
+    {% endif %}
 
-        <div class="member-photo">
-            {% if member.photo_path %}
-                <img src="{{ url_for('static', filename='photos/' ~ member.photo_path) }}">
-            {% else %}
-                <p>❌ بدون عکس</p>
-            {% endif %}
-        </div>
+    <hr>
 
-        <div class="member-info">
-            <p><strong>نام:</strong> {{ member.name }}</p>
-            <p><strong>کد:</strong> {{ member.code }}</p>
-            <p><strong>پایه:</strong> {{ member.grade }}</p>
-            <p><strong>شماره تماس:</strong> {{ member.phone }}</p>
+    <h2>📖 امانت‌ها</h2>
 
-            <a href="/edit_member/{{ member.id }}" class="btn edit">✏️ ویرایش اطلاعات</a>
-            <a href="/members" class="btn">⬅️ بازگشت به لیست</a>
-        </div>
+    <a href="/add_borrow/{{ member.id }}" class="btn">➕ ثبت امانت</a>
 
-    </div>
+    <table>
+        <tr>
+            <th>کتاب</th>
+            <th>تاریخ امانت</th>
+            <th>تاریخ بازگشت</th>
+            <th>وضعیت</th>
+        </tr>
 
+        {% for b in borrowings %}
+        <tr>
+            <td>{{ b.title }}</td>
+            <td>{{ b.borrow_date }}</td>
+            <td>{{ b.return_date or "-" }}</td>
+            <td>{{ b.status }}</td>
+        </tr>
+        {% endfor %}
+    </table>
 </div>
 
 </body>
