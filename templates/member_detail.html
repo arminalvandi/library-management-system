@@ -3,23 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <title>اطلاعات دانش‌آموز</title>
-    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
 <div class="page">
-    <h1>👤 اطلاعات دانش‌آموز</h1>
 
-    <div class="profile-card">
-        <img src="https://via.placeholder.com/160" class="profile-img">
+    <h1>📘 اطلاعات دانش‌آموز</h1>
 
-        <div class="profile-info">
-            <p><strong>نام:</strong> آرمین</p>
-            <p><strong>کد دانش‌آموز:</strong> 1001</p>
-            <p><strong>پایه:</strong> نهم</p>
-            <p><strong>شماره تماس:</strong> 0912xxxxxxx</p>
+    <div class="member-card">
+
+        <div class="member-photo">
+            {% if member.photo_path %}
+                <img src="{{ url_for('static', filename='photos/' ~ member.photo_path) }}">
+            {% else %}
+                <p>❌ بدون عکس</p>
+            {% endif %}
         </div>
+
+        <div class="member-info">
+            <p><strong>نام:</strong> {{ member.name }}</p>
+            <p><strong>کد:</strong> {{ member.code }}</p>
+            <p><strong>پایه:</strong> {{ member.grade }}</p>
+            <p><strong>شماره تماس:</strong> {{ member.phone }}</p>
+
+            <a href="/edit_member/{{ member.id }}" class="btn edit">✏️ ویرایش اطلاعات</a>
+            <a href="/members" class="btn">⬅️ بازگشت به لیست</a>
+        </div>
+
     </div>
+
 </div>
 
 </body>
