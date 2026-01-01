@@ -26,7 +26,15 @@ def get_db_connection():
 # ---------- صفحه تست ----------
 @app.route("/")
 def index():
-    return "Library Management System Backend Ready"
+    return redirect("/members")
+
+# ---------- لیست اعضا ----------
+@app.route("/members")
+def members():
+    conn = get_db_connection()
+    members = conn.execute("SELECT * FROM members").fetchall()
+    conn.close()
+    return render_template("members.html", members=members)
 
 # ---------- ثبت عضو ----------
 @app.route("/add_member", methods=["GET", "POST"])
@@ -52,9 +60,20 @@ def add_member():
         conn.commit()
         conn.close()
 
-        return redirect("/")
+        return redirect("/members")
 
     return render_template("add_member.html")
+
+# ---------- اطلاعات دانش‌آموز ----------
+@app.route("/member/<int:member_id>")
+def member_detail(member_id):
+    conn = get_db_connection()
+    member = conn.execute(
+        "SELECT * FROM members WHERE id = ?",
+        (member_id,)
+    ).fetchone()
+    conn.close()
+    return render_template("member_detail.html", member=member)
 
 # ---------- اجرای برنامه ----------
 if __name__ == "__main__":
