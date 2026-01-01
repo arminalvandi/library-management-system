@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>لیست اعضا</title>
-    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
@@ -13,6 +13,7 @@
     <table class="members-table">
         <thead>
             <tr>
+                <th>عکس</th>
                 <th>نام</th>
                 <th>کد</th>
                 <th>پایه</th>
@@ -21,26 +22,27 @@
             </tr>
         </thead>
         <tbody>
+
+            {% for member in members %}
             <tr>
-                <td>آرمین</td>
-                <td>1001</td>
-                <td>نهم</td>
-                <td>0912xxxxxxx</td>
                 <td>
-                    <a href="member_detail.html?id=1001" class="btn info">اطلاعات</a>
-                    <a href="add_member.html?id=1001" class="btn edit">ویرایش</a>
+                    {% if member.photo_path %}
+                        <img src="{{ url_for('static', filename='photos/' ~ member.photo_path) }}" width="50">
+                    {% else %}
+                        ❌
+                    {% endif %}
+                </td>
+                <td>{{ member.name }}</td>
+                <td>{{ member.code }}</td>
+                <td>{{ member.grade }}</td>
+                <td>{{ member.phone }}</td>
+                <td>
+                    <a href="/member/{{ member.id }}" class="btn info">اطلاعات</a>
+                    <a href="/edit_member/{{ member.id }}" class="btn edit">ویرایش</a>
                 </td>
             </tr>
-            <tr>
-                <td>آبتین</td>
-                <td>1002</td>
-                <td>نهم</td>
-                <td>0912xxxxxxx</td>
-                <td>
-                    <a href="member_detail.html?id=1002" class="btn info">اطلاعات</a>
-                    <a href="add_member.html?id=1002" class="btn edit">ویرایش</a>
-                </td>
-            </tr>
+            {% endfor %}
+
         </tbody>
     </table>
 </div>
