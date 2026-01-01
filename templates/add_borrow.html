@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>ثبت امانت کتاب</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+<body>
+
+<div class="page">
+    <h1>📚 ثبت امانت جدید</h1>
+
+    <form method="post">
+        <input type="hidden" name="member_id" value="{{ member_id }}">
+
+        <label>انتخاب کتاب</label>
+        <select name="book_id" required>
+            {% for book in books %}
+                <option value="{{ book.id }}">{{ book.title }}</option>
+            {% endfor %}
+        </select>
+
+        <button class="btn">ثبت امانت</button>
+    </form>
+</div>
+
+</body>
+</html>
