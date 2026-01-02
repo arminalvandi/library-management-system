@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>امانت‌ها</title>
+    <link rel="stylesheet" href="../static/css/style.css">
+</head>
+<body>
+
+<h1>📚 لیست امانت‌ها</h1>
+
+<a href="/add_loan" class="btn">➕ ثبت امانت</a>
+
+<table>
+    <tr>
+        <th>عضو</th>
+        <th>کتاب</th>
+        <th>تاریخ امانت</th>
+        <th>وضعیت</th>
+    </tr>
+
+    {% for loan in loans %}
+    <tr>
+        <td>{{ loan.member_name }}</td>
+        <td>{{ loan.book_title }}</td>
+        <td>{{ loan.loan_date }}</td>
+        <td>
+            {% if loan.return_date == None %}
+                <a href="/return_book/{{ loan.id }}" class="btn return">
+                    تحویل کتاب
+                </a>
+            {% else %}
+                ✔ تحویل شده
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+</body>
+</html>
