@@ -32,7 +32,7 @@ def init_admin():
             password TEXT
         )
     """)
-    # اگر admin اولیه وجود ندارد اضافه کن
+    # اضافه کردن admin اولیه اگر وجود ندارد
     admin = conn.execute("SELECT * FROM admins WHERE username='admin'").fetchone()
     if not admin:
         hashed = hashlib.sha256("1234".encode()).hexdigest()
@@ -257,4 +257,4 @@ def return_book(borrow_id, book_id):
 
 # ---------- اجرا ----------
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True)            
