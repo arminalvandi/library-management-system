@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>✏️ ویرایش کتاب</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="page">
+    <h1>✏️ ویرایش کتاب</h1>
+
+    <div class="form-card">
+        <form method="POST">
+            <label>نام کتاب</label>
+            <input type="text" name="title" value="{{ book.title }}" required>
+
+            <label>موضوع</label>
+            <input type="text" name="subject" value="{{ book.subject }}" required>
+
+            <label>شماره قفسه</label>
+            <input type="text" name="shelf" value="{{ book.shelf }}" required>
+
+            <button type="submit" class="btn submit">ذخیره تغییرات</button>
+            <a href="/books" class="btn cancel">انصراف</a>
+        </form>
+    </div>
+</div>
+
+</body>
+</html>
