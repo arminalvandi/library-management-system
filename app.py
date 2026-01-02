@@ -163,3 +163,48 @@ def books():
     books = conn.execute("SELECT * FROM books").fetchall()
     conn.close()
     return render_template("books.html", books=books)
+# ---------- افزودن کتاب ----------
+@app.route("/add_book", methods=["GET", "POST"])
+def add_book():
+    if request.method == "POST":
+        title = request.form["title"]
+        subject = request.form["subject"]
+        shelf = request.form["shelf"]
+
+        conn = get_db_connection()
+        conn.execute("""
+            INSERT INTO books (title, subject, shelf, status)
+            VALUES (?, ?, ?, 'آزاد')
+        """, (title, subject, shelf))
+        conn.commit()
+        conn.close()
+
+        return redirect("/books")
+
+    return render_template("add_book.html", book=None)
+    # ---------- ویرایش کتاب ----------
+@app.route("/edit_book/<int:book_id>", methods=["GET", "POST"])
+def edit_book(book_id):
+    conn = get_db_connection()
+    book = conn.execute(
+        "SELECT * FROM books WHERE id=?",
+        (book_id,)
+    ).fetchone()
+
+    if request.method == "POST":
+        title = request.form["title"]
+        subject = request.form["subject"]
+        shelf = request.form["shelf"]
+
+        conn.execute("""
+            UPDATE books
+            SET title=?, subject=?, shelf=?
+            WHERE id=?
+        """, (title, subject, shelf, book_id))
+        conn.commit()
+        conn.close()
+
+        return redirect("/books")
+
+    conn.close()
+    return render_template("add_book.html", book=book)
