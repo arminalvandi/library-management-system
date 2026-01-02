@@ -156,3 +156,10 @@ def return_book(borrow_id):
 # ---------- اجرای برنامه ----------
 if __name__ == "__main__":
     app.run(debug=True)
+# ---------- لیست کتاب‌ها ----------
+@app.route("/books")
+def books():
+    conn = get_db_connection()
+    books = conn.execute("SELECT * FROM books").fetchall()
+    conn.close()
+    return render_template("books.html", books=books)
