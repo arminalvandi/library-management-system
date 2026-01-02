@@ -1,20 +1,24 @@
 <div class="form-card">
     <form method="POST" enctype="multipart/form-data">
         <label>نام دانش‌آموز</label>
-        <input type="text" name="name" placeholder="مثلاً آرمین" required>
+        <input type="text" name="name" placeholder="مثلاً آرمین" value="{{ member.name if member else '' }}" required>
 
         <label>کد دانش‌آموز</label>
-        <input type="text" name="code" placeholder="مثلاً 1001" required>
+        <input type="text" name="code" placeholder="مثلاً 1001" value="{{ member.code if member else '' }}" required>
 
         <label>پایه</label>
-        <input type="text" name="grade" placeholder="مثلاً نهم" required>
+        <input type="text" name="grade" placeholder="مثلاً نهم" value="{{ member.grade if member else '' }}" required>
 
         <label>شماره تماس</label>
-        <input type="text" name="phone" placeholder="مثلاً 0912xxxxxxx" required>
+        <input type="text" name="phone" placeholder="مثلاً 0912xxxxxxx" value="{{ member.phone if member else '' }}" required>
 
         <label>عکس دانش‌آموز</label>
+        {% if member and member.photo_path %}
+            <img src="{{ url_for('static', filename='photos/' ~ member.photo_path) }}" width="100" style="display:block; margin-bottom:10px;">
+        {% endif %}
         <input type="file" name="photo" accept="image/*">
 
-        <button type="submit" class="btn submit">ثبت</button>
+        <button type="submit" class="btn submit">{{ 'ذخیره تغییرات' if member else 'ثبت' }}</button>
+        <a href="/members" class="btn cancel">انصراف</a>
     </form>
 </div>
