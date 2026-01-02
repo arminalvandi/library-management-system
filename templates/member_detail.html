@@ -15,7 +15,7 @@
     <p>شماره تماس: {{ member.phone }}</p>
 
     {% if member.photo_path %}
-        <img src="{{ url_for('static', filename='photos/' ~ member.photo_path) }}" width="150">
+        <img src="{{ url_for('static', filename='photos/' ~ member.photo_path) }}" class="profile-img">
     {% endif %}
 
     <hr>
@@ -25,21 +25,24 @@
     <a href="/add_borrow/{{ member.id }}" class="btn info">➕ ثبت امانت</a>
 
     <table class="data-table">
-        <tr>
-            <th>کتاب</th>
-            <th>تاریخ امانت</th>
-            <th>تاریخ بازگشت</th>
-            <th>وضعیت</th>
-        </tr>
-
-        {% for b in borrows %}
-        <tr>
-            <td>{{ b.title }}</td>
-            <td>{{ b.borrow_date }}</td>
-            <td>{{ b.return_date or "-" }}</td>
-            <td>{{ b.status }}</td>
-        </tr>
-        {% endfor %}
+        <thead>
+            <tr>
+                <th>کتاب</th>
+                <th>تاریخ امانت</th>
+                <th>تاریخ بازگشت</th>
+                <th>وضعیت</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in borrows %}
+            <tr>
+                <td>{{ b.title }}</td>
+                <td>{{ b.borrow_date }}</td>
+                <td>{{ b.return_date or "-" }}</td>
+                <td>{{ b.status }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
 </div>
 
