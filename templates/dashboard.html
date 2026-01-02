@@ -2,36 +2,36 @@
 <html lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>داشبورد مدیریت</title>
+    <title>داشبورد مدیر</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
-<div class="page">
-    <h1>📊 داشبورد مدیریت</h1>
+<div class="dashboard">
+    <h1>📊 داشبورد مدیریت کتابخانه</h1>
 
-    <div class="dashboard-cards">
-        <div class="card">
+    <div class="cards">
+        <div class="card purple">
             <h2>👥 اعضا</h2>
-            <p>{{ total_members }}</p>
+            <p>{{ members_count }}</p>
+            <a href="/members">مشاهده</a>
         </div>
 
-        <div class="card">
+        <div class="card purple">
             <h2>📚 کتاب‌ها</h2>
-            <p>{{ total_books }}</p>
+            <p>{{ books_count }}</p>
+            <a href="/books">مشاهده</a>
         </div>
 
-        <div class="card">
-            <h2>🔄 امانت فعال</h2>
-            <p>{{ active_borrows }}</p>
+        <div class="card green">
+            <h2>🟢 کتاب‌های آزاد</h2>
+            <p>{{ free_count }}</p>
         </div>
-    </div>
 
-    <div class="dashboard-actions">
-        <a href="/add_member" class="btn big">➕ افزودن عضو</a>
-        <a href="/add_book" class="btn big">➕ افزودن کتاب</a>
-        <a href="/members" class="btn big">👥 لیست اعضا</a>
-        <a href="/books" class="btn big">📚 لیست کتاب‌ها</a>
+        <div class="card red">
+            <h2>🔴 در امانت</h2>
+            <p>{{ borrowed_count }}</p>
+        </div>
     </div>
 </div>
 
