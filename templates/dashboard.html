@@ -2,30 +2,36 @@
 <html lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>داشبورد مدیر</title>
-    <link rel="stylesheet" href="../static/css/style.css">
+    <title>داشبورد مدیریت</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
 <div class="page">
-    <h1>📚 داشبورد مدیر</h1>
+    <h1>📊 داشبورد مدیریت</h1>
 
-    <div class="cards">
-        <a href="members.html" class="card-link">
-            <div class="card">لیست اعضا</div>
-        </a>
-        <a href="add_member.html" class="card-link">
-            <div class="card">ثبت عضو جدید</div>
-        </a>
-        <a href="#" class="card-link">
-            <div class="card">لیست کتاب‌ها</div>
-        </a>
-        <a href="#" class="card-link">
-            <div class="card">ثبت کتاب جدید</div>
-        </a>
-        <a href="#" class="card-link">
-            <div class="card">ثبت امانت کتاب</div>
-        </a>
+    <div class="dashboard-cards">
+        <div class="card">
+            <h2>👥 اعضا</h2>
+            <p>{{ total_members }}</p>
+        </div>
+
+        <div class="card">
+            <h2>📚 کتاب‌ها</h2>
+            <p>{{ total_books }}</p>
+        </div>
+
+        <div class="card">
+            <h2>🔄 امانت فعال</h2>
+            <p>{{ active_borrows }}</p>
+        </div>
+    </div>
+
+    <div class="dashboard-actions">
+        <a href="/add_member" class="btn big">➕ افزودن عضو</a>
+        <a href="/add_book" class="btn big">➕ افزودن کتاب</a>
+        <a href="/members" class="btn big">👥 لیست اعضا</a>
+        <a href="/books" class="btn big">📚 لیست کتاب‌ها</a>
     </div>
 </div>
 
