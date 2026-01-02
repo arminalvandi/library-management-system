@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>لیست کتاب‌ها</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="page">
+    <div class="page-header">
+        <h1>📚 لیست کتاب‌ها</h1>
+        <a href="/add_book" class="btn add">➕ افزودن کتاب</a>
+    </div>
+
+    <table class="members-table">
+        <thead>
+            <tr>
+                <th>نام کتاب</th>
+                <th>موضوع</th>
+                <th>قفسه</th>
+                <th>وضعیت</th>
+                <th>عملیات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for book in books %}
+            <tr>
+                <td>{{ book.title }}</td>
+                <td>{{ book.subject }}</td>
+                <td>{{ book.shelf }}</td>
+                <td>
+                    {% if book.status == 'آزاد' %}
+                        <span class="status free">🟢 آزاد</span>
+                    {% else %}
+                        <span class="status busy">🔴 در امانت</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="/edit_book/{{ book.id }}" class="btn edit">ویرایش</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+</body>
+</html>
