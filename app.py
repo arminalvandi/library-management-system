@@ -23,7 +23,26 @@ def get_db_connection():
 # ---------- صفحه اصلی ----------
 @app.route("/")
 def index():
-    return redirect("/members")
+    return redirect("/dashboard")
+
+# ---------- داشبورد مدیر ----------
+@app.route("/dashboard")
+def dashboard():
+    conn = get_db_connection()
+
+    members_count = conn.execute("SELECT COUNT(*) FROM members").fetchone()[0]
+    books_count = conn.execute("SELECT COUNT(*) FROM books").fetchone()[0]
+    borrowed_count = conn.execute("SELECT COUNT(*) FROM books WHERE status='امانت'").fetchone()[0]
+    free_count = conn.execute("SELECT COUNT(*) FROM books WHERE status='آزاد'").fetchone()[0]
+
+    conn.close()
+    return render_template(
+        "dashboard.html",
+        members_count=members_count,
+        books_count=books_count,
+        borrowed_count=borrowed_count,
+        free_count=free_count
+    )
 
 # ---------- اعضا ----------
 @app.route("/members")
@@ -186,4 +205,4 @@ def return_book(borrow_id, book_id):
 
 # ---------- اجرا ----------
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True) 
