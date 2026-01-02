@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Library System{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="sidebar">
+        <h2>کتابخانه</h2>
+        <ul>
+            <li><a href="{{ url_for('dashboard') }}">داشبورد</a></li>
+            <li><a href="{{ url_for('members') }}">اعضا</a></li>
+            <li><a href="{{ url_for('books') }}">کتاب‌ها</a></li>
+            <li><a href="{{ url_for('logout') }}">خروج</a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        {% block content %}
+        {% endblock %}
+    </div>
+</body>
+</html>
