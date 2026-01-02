@@ -13,7 +13,7 @@
         <a href="/add_book" class="btn add">➕ افزودن کتاب</a>
     </div>
 
-    <table class="members-table">
+    <table class="data-table">
         <thead>
             <tr>
                 <th>نام کتاب</th>
@@ -31,9 +31,9 @@
                 <td>{{ book.shelf }}</td>
                 <td>
                     {% if book.status == 'آزاد' %}
-                        <span class="status free">🟢 آزاد</span>
+                        🟢 آزاد
                     {% else %}
-                        <span class="status busy">🔴 در امانت</span>
+                        🔴 در امانت
                     {% endif %}
                 </td>
                 <td>
