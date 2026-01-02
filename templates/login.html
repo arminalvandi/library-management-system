@@ -2,24 +2,28 @@
 <html lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>ورود مدیر</title>
-    <link rel="stylesheet" href="../static/css/style.css">
+    <title>ورود به داشبورد</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-<div class="form-card">
-    <h2>ورود مدیر</h2>
-    {% if error %}
-        <p style="color: yellow;">{{ error }}</p>
-    {% endif %}
-    <form method="POST">
-        <label>نام کاربری</label>
-        <input type="text" name="username" required>
 
-        <label>رمز عبور</label>
-        <input type="text" name="password" required>
+<div class="page">
+    <div class="form-card">
+        <h2>ورود مدیر</h2>
+        {% if error %}
+        <p style="color: #ffcccb;">{{ error }}</p>
+        {% endif %}
+        <form method="POST">
+            <label for="username">نام کاربری</label>
+            <input type="text" id="username" name="username" placeholder="نام کاربری" required>
 
-        <button class="submit" type="submit">ورود</button>
-    </form>
+            <label for="password">رمز عبور</label>
+            <input type="password" id="password" name="password" placeholder="رمز عبور" required>
+
+            <button type="submit" class="submit">ورود</button>
+        </form>
+    </div>
 </div>
+
 </body>
 </html>
