@@ -2,8 +2,8 @@
 <html lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>داشبورد مدیر</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>داشبورد مدیریت</title>
+    <link rel="stylesheet" href="../static/css/style.css">
 </head>
 <body>
 
@@ -11,27 +11,29 @@
     <h1>📊 داشبورد مدیریت کتابخانه</h1>
 
     <div class="cards">
-        <div class="card purple">
+        <a href="/members" class="card">
             <h2>👥 اعضا</h2>
-            <p>{{ members_count }}</p>
-            <a href="/members">مشاهده</a>
-        </div>
+            <p>تعداد اعضا: {{ members_count }}</p>
+        </a>
 
-        <div class="card purple">
+        <a href="/books" class="card">
             <h2>📚 کتاب‌ها</h2>
-            <p>{{ books_count }}</p>
-            <a href="/books">مشاهده</a>
-        </div>
+            <p>تعداد کل کتاب‌ها: {{ books_count }}</p>
+        </a>
 
-        <div class="card green">
-            <h2>🟢 کتاب‌های آزاد</h2>
-            <p>{{ free_count }}</p>
-        </div>
+        <a href="/books" class="card">
+            <h2>📖 امانت داده شده</h2>
+            <p>تعداد: {{ borrowed_count }}</p>
+        </a>
 
-        <div class="card red">
-            <h2>🔴 در امانت</h2>
-            <p>{{ borrowed_count }}</p>
-        </div>
+        <a href="/books" class="card">
+            <h2>📖 کتاب‌های آزاد</h2>
+            <p>تعداد: {{ free_count }}</p>
+        </a>
+    </div>
+
+    <div style="text-align:center; margin-top:30px;">
+        <a href="/logout" class="btn info">🚪 خروج</a>
     </div>
 </div>
 
