@@ -2,42 +2,38 @@
 <html lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>ویرایش عضو</title>
+    <title>✏️ ویرایش عضو</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
 <div class="page">
-    <h1>✏️ ویرایش اطلاعات دانش‌آموز</h1>
+    <h1>✏️ ویرایش عضو</h1>
 
-    <form method="POST" enctype="multipart/form-data" class="form">
+    <div class="form-card">
+        <form method="POST" enctype="multipart/form-data">
+            <label>نام دانش‌آموز</label>
+            <input type="text" name="name" value="{{ member.name }}" required>
 
-        <label>نام</label>
-        <input type="text" name="name" value="{{ member.name }}" required>
+            <label>کد دانش‌آموز</label>
+            <input type="text" name="code" value="{{ member.code }}" required>
 
-        <label>کد</label>
-        <input type="text" name="code" value="{{ member.code }}" required>
+            <label>پایه</label>
+            <input type="text" name="grade" value="{{ member.grade }}" required>
 
-        <label>پایه</label>
-        <input type="text" name="grade" value="{{ member.grade }}" required>
+            <label>شماره تماس</label>
+            <input type="text" name="phone" value="{{ member.phone }}" required>
 
-        <label>شماره تماس</label>
-        <input type="text" name="phone" value="{{ member.phone }}" required>
+            <label>عکس دانش‌آموز</label>
+            <input type="file" name="photo" accept="image/*">
+            {% if member.photo_path %}
+                <p>عکس فعلی: <img src="{{ url_for('static', filename='photos/' ~ member.photo_path) }}" width="80"></p>
+            {% endif %}
 
-        <label>عکس جدید (اختیاری)</label>
-        <input type="file" name="photo">
-
-        {% if member.photo_path %}
-            <p>عکس فعلی:</p>
-            <img src="{{ url_for('static', filename='photos/' ~ member.photo_path) }}" width="120">
-        {% endif %}
-
-        <br><br>
-
-        <button type="submit" class="btn edit">💾 ذخیره تغییرات</button>
-        <a href="/members" class="btn">❌ انصراف</a>
-
-    </form>
+            <button type="submit" class="btn submit">ذخیره تغییرات</button>
+            <a href="/members" class="btn cancel">انصراف</a>
+        </form>
+    </div>
 </div>
 
 </body>
