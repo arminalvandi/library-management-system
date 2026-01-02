@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>اطلاعات دانش‌آموز</title>
-    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
@@ -15,16 +15,16 @@
     <p>شماره تماس: {{ member.phone }}</p>
 
     {% if member.photo_path %}
-        <img src="/static/photos/{{ member.photo_path }}" width="150">
+        <img src="{{ url_for('static', filename='photos/' ~ member.photo_path) }}" width="150">
     {% endif %}
 
     <hr>
 
     <h2>📖 امانت‌ها</h2>
 
-    <a href="/add_borrow/{{ member.id }}" class="btn">➕ ثبت امانت</a>
+    <a href="/add_borrow/{{ member.id }}" class="btn info">➕ ثبت امانت</a>
 
-    <table>
+    <table class="data-table">
         <tr>
             <th>کتاب</th>
             <th>تاریخ امانت</th>
@@ -32,7 +32,7 @@
             <th>وضعیت</th>
         </tr>
 
-        {% for b in borrowings %}
+        {% for b in borrows %}
         <tr>
             <td>{{ b.title }}</td>
             <td>{{ b.borrow_date }}</td>
