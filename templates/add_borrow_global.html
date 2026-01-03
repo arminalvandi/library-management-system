@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <title>ثبت امانت کتاب</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="page">
+    <h1>📚 ثبت امانت جدید</h1>
+
+    <form method="post">
+        <label>انتخاب عضو</label>
+        <select name="member_id" required>
+            {% for member in members %}
+                <option value="{{ member.id }}">{{ member.name }} - {{ member.code }}</option>
+            {% endfor %}
+        </select>
+
+        <label>انتخاب کتاب</label>
+        <select name="book_id" required>
+            {% for book in books %}
+                <option value="{{ book.id }}">{{ book.title }}</option>
+            {% endfor %}
+        </select>
+
+        <button class="btn">ثبت امانت</button>
+    </form>
+</div>
+
+</body>
+</html>
