@@ -1,19 +1,45 @@
+
 import sqlite3
 import os
 
-DATABASE_DIR = "database"
-DATABASE_PATH = os.path.join(DATABASE_DIR, "library.db")
-SCHEMA_PATH = os.path.join(DATABASE_DIR, "schema.sql")
+os.makedirs("database", exist_ok=True)
 
-if not os.path.exists(DATABASE_DIR):
-    os.makedirs(DATABASE_DIR)
+conn = sqlite3.connect("database/library.db")
+c = conn.cursor()
 
-conn = sqlite3.connect(DATABASE_PATH)
+c.execute("""
+CREATE TABLE IF NOT EXISTS members (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    code TEXT,
+    grade TEXT,
+    phone TEXT,
+    photo_path TEXT
+)
+""")
 
-with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
-    conn.executescript(f.read())
+c.execute("""
+CREATE TABLE IF NOT EXISTS books (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT,
+    subject TEXT,
+    shelf TEXT,
+    status TEXT
+)
+""")
+
+c.execute("""
+CREATE TABLE IF NOT EXISTS borrowings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    member_id INTEGER,
+    book_id INTEGER,
+    borrow_date TEXT,
+    return_date TEXT,
+    status TEXT
+)
+""")
 
 conn.commit()
 conn.close()
 
-print("✅ Database created successfully")
+print("✅ دیتابیس ساخته شد")
