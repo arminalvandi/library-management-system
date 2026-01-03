@@ -1,4 +1,4 @@
-    from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 import os
 from werkzeug.utils import secure_filename
@@ -32,7 +32,6 @@ def init_admin():
             password TEXT
         )
     """)
-    # اضافه کردن admin اولیه اگر وجود ندارد
     admin = conn.execute("SELECT * FROM admins WHERE username='admin'").fetchone()
     if not admin:
         hashed = hashlib.sha256("1234".encode()).hexdigest()
@@ -223,6 +222,14 @@ def edit_book(book_id):
     return render_template("add_book.html", book=book)
 
 # ---------- امانت ----------
+@app.route("/add_borrow_select")
+@login_required
+def add_borrow_select():
+    conn = get_db_connection()
+    members = conn.execute("SELECT * FROM members").fetchall()
+    conn.close()
+    return render_template("select_member.html", members=members)
+
 @app.route("/add_borrow/<int:member_id>", methods=["GET", "POST"])
 @login_required
 def add_borrow(member_id):
@@ -255,29 +262,26 @@ def return_book(borrow_id, book_id):
     conn.close()
     return redirect(request.referrer)
 
-# ---------- مسیر جدید: ثبت امانت برای همه اعضا و کتاب‌ها ----------
-@app.route("/add_borrow_global", methods=["GET", "POST"])
+# ---------- لیست کتاب‌های امانت داده شده ----------
+@app.route("/borrowed_books")
 @login_required
-def add_borrow_global():
+def borrowed_books():
     conn = get_db_connection()
-    members = conn.execute("SELECT * FROM members").fetchall()
-    books = conn.execute("SELECT * FROM books WHERE status='آزاد'").fetchall()
-
-    if request.method == "POST":
-        member_id = request.form["member_id"]
-        book_id = request.form["book_id"]
-
-        conn.execute("""
-            INSERT INTO borrowings (member_id, book_id, borrow_date, status)
-            VALUES (?, ?, ?, 'امانت')
-        """, (member_id, book_id, date.today().isoformat()))
-        conn.execute("UPDATE books SET status='امانت' WHERE id=?", (book_id,))
-        conn.commit()
-        conn.close()
-        return redirect("/dashboard")
-
+    books = conn.execute("SELECT books.id, books.title, members.name as member_name, borrowings.borrow_date "
+                         "FROM borrowings JOIN books ON borrowings.book_id = books.id "
+                         "JOIN members ON borrowings.member_id = members.id "
+                         "WHERE borrowings.status='امانت'").fetchall()
     conn.close()
-    return render_template("add_borrow_global.html", members=members, books=books)
+    return render_template("borrowed_books.html", books=books)
+
+# ---------- لیست کتاب‌های آزاد ----------
+@app.route("/free_books")
+@login_required
+def free_books():
+    conn = get_db_connection()
+    books = conn.execute("SELECT * FROM books WHERE status='آزاد'").fetchall()
+    conn.close()
+    return render_template("books.html", books=books)
 
 # ---------- اجرا ----------
 if __name__ == "__main__":
