@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+    from flask import Flask, render_template, request, redirect, url_for, session
 import sqlite3
 import os
 from werkzeug.utils import secure_filename
@@ -6,7 +6,7 @@ from datetime import date
 import hashlib
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey123"
+app.secret_key = "supersecretkey123"  # کلید امن برای session
 
 # ---------- تنظیمات ----------
 DATABASE_PATH = "database/library.db"
@@ -32,6 +32,7 @@ def init_admin():
             password TEXT
         )
     """)
+    # اضافه کردن admin اولیه اگر وجود ندارد
     admin = conn.execute("SELECT * FROM admins WHERE username='admin'").fetchone()
     if not admin:
         hashed = hashlib.sha256("1234".encode()).hexdigest()
@@ -183,24 +184,6 @@ def books():
     conn.close()
     return render_template("books.html", books=books)
 
-# --- لیست کتاب‌های امانت داده شده ---
-@app.route("/books/borrowed")
-@login_required
-def borrowed_books():
-    conn = get_db_connection()
-    books = conn.execute("SELECT * FROM books WHERE status='امانت'").fetchall()
-    conn.close()
-    return render_template("books.html", books=books)
-
-# --- لیست کتاب‌های آزاد ---
-@app.route("/books/free")
-@login_required
-def free_books():
-    conn = get_db_connection()
-    books = conn.execute("SELECT * FROM books WHERE status='آزاد'").fetchall()
-    conn.close()
-    return render_template("books.html", books=books)
-
 @app.route("/add_book", methods=["GET", "POST"])
 @login_required
 def add_book():
@@ -240,29 +223,23 @@ def edit_book(book_id):
     return render_template("add_book.html", book=book)
 
 # ---------- امانت ----------
-@app.route("/add_borrow", methods=["GET", "POST"])
+@app.route("/add_borrow/<int:member_id>", methods=["GET", "POST"])
 @login_required
-def add_borrow_global():
+def add_borrow(member_id):
     conn = get_db_connection()
-    members = conn.execute("SELECT * FROM members").fetchall()
     books = conn.execute("SELECT * FROM books WHERE status='آزاد'").fetchall()
-
     if request.method == "POST":
-        member_id = request.form["member_id"]
         book_id = request.form["book_id"]
-        borrow_date = request.form.get("borrow_date", date.today().isoformat())
-
         conn.execute("""
             INSERT INTO borrowings (member_id, book_id, borrow_date, status)
             VALUES (?, ?, ?, 'امانت')
-        """, (member_id, book_id, borrow_date))
+        """, (member_id, book_id, date.today().isoformat()))
         conn.execute("UPDATE books SET status='امانت' WHERE id=?", (book_id,))
         conn.commit()
         conn.close()
-        return redirect("/dashboard")
-
+        return redirect(url_for("member_detail", member_id=member_id))
     conn.close()
-    return render_template("add_borrow_global.html", members=members, books=books, today=date.today().isoformat())
+    return render_template("add_borrow.html", member_id=member_id, books=books)
 
 @app.route("/return_book/<int:borrow_id>/<int:book_id>")
 @login_required
@@ -277,6 +254,30 @@ def return_book(borrow_id, book_id):
     conn.commit()
     conn.close()
     return redirect(request.referrer)
+
+# ---------- مسیر جدید: ثبت امانت برای همه اعضا و کتاب‌ها ----------
+@app.route("/add_borrow_global", methods=["GET", "POST"])
+@login_required
+def add_borrow_global():
+    conn = get_db_connection()
+    members = conn.execute("SELECT * FROM members").fetchall()
+    books = conn.execute("SELECT * FROM books WHERE status='آزاد'").fetchall()
+
+    if request.method == "POST":
+        member_id = request.form["member_id"]
+        book_id = request.form["book_id"]
+
+        conn.execute("""
+            INSERT INTO borrowings (member_id, book_id, borrow_date, status)
+            VALUES (?, ?, ?, 'امانت')
+        """, (member_id, book_id, date.today().isoformat()))
+        conn.execute("UPDATE books SET status='امانت' WHERE id=?", (book_id,))
+        conn.commit()
+        conn.close()
+        return redirect("/dashboard")
+
+    conn.close()
+    return render_template("add_borrow_global.html", members=members, books=books)
 
 # ---------- اجرا ----------
 if __name__ == "__main__":
