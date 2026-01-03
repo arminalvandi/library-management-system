@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>ثبت امانت کتاب</title>
-    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
@@ -11,8 +11,6 @@
     <h1>📚 ثبت امانت جدید</h1>
 
     <form method="post">
-        <input type="hidden" name="member_id" value="{{ member_id }}">
-
         <label>انتخاب کتاب</label>
         <select name="book_id" required>
             {% for book in books %}
@@ -20,7 +18,8 @@
             {% endfor %}
         </select>
 
-        <button class="btn">ثبت امانت</button>
+        <button type="submit" class="btn">ثبت امانت</button>
+        <a href="/member/{{ member_id }}" class="btn cancel">انصراف</a>
     </form>
 </div>
 
