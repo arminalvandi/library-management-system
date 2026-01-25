@@ -4,13 +4,30 @@
     <meta charset="UTF-8">
     <title>لیست اعضا</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        /* استایل فیلد جست‌وجو */
+        .search-box {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+        .search-box input {
+            width: 300px;
+            padding: 8px;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
 
 <div class="page">
     <h1>👥 لیست اعضا</h1>
 
-    <table class="data-table">
+    <div class="search-box">
+        <label for="memberSearch">🔍 جست‌وجو: </label>
+        <input type="text" id="memberSearch" placeholder="نام یا کد را وارد کنید...">
+    </div>
+
+    <table class="data-table" id="membersTable">
         <thead>
             <tr>
                 <th>عکس</th>
@@ -22,7 +39,6 @@
             </tr>
         </thead>
         <tbody>
-
             {% for member in members %}
             <tr>
                 <td>
@@ -42,10 +58,27 @@
                 </td>
             </tr>
             {% endfor %}
-
         </tbody>
     </table>
 </div>
+
+<script>
+    // اسکریپت جست‌وجوی اعضا
+    const searchInput = document.getElementById("memberSearch");
+    searchInput.addEventListener("keyup", function() {
+        const filter = searchInput.value.toLowerCase();
+        const rows = document.querySelectorAll("#membersTable tbody tr");
+        rows.forEach(row => {
+            const name = row.cells[1].textContent.toLowerCase();
+            const code = row.cells[2].textContent.toLowerCase();
+            if(name.includes(filter) || code.includes(filter)) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    });
+</script>
 
 </body>
 </html>
