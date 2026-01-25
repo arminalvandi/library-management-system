@@ -4,9 +4,10 @@ import os
 from werkzeug.utils import secure_filename
 from datetime import date
 import hashlib
+from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = "supersecretkey123"  # کلید امن برای session
+app.secret_key = "supersecretkey123"
 
 # ---------- تنظیمات ----------
 DATABASE_PATH = "database/library.db"
@@ -16,13 +17,13 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 os.makedirs("database", exist_ok=True)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# ---------- اتصال دیتابیس ----------
+# ---------- دیتابیس ----------
 def get_db_connection():
     conn = sqlite3.connect(DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
-# ---------- ایجاد جدول مدیر ----------
+# ---------- ادمین ----------
 def init_admin():
     conn = get_db_connection()
     conn.execute("""
@@ -35,54 +36,56 @@ def init_admin():
     admin = conn.execute("SELECT * FROM admins WHERE username='admin'").fetchone()
     if not admin:
         hashed = hashlib.sha256("1234".encode()).hexdigest()
-        conn.execute("INSERT INTO admins (username, password) VALUES (?, ?)", ("admin", hashed))
+        conn.execute(
+            "INSERT INTO admins (username, password) VALUES (?, ?)",
+            ("admin", hashed)
+        )
     conn.commit()
     conn.close()
 
 init_admin()
 
-# ---------- صفحه ورود ----------
+# ---------- لاگین ----------
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
         username = request.form["username"]
-        password = request.form["password"]
-        hashed_password = hashlib.sha256(password.encode()).hexdigest()
+        password = hashlib.sha256(request.form["password"].encode()).hexdigest()
 
         conn = get_db_connection()
-        admin = conn.execute("SELECT * FROM admins WHERE username=? AND password=?", (username, hashed_password)).fetchone()
+        admin = conn.execute(
+            "SELECT * FROM admins WHERE username=? AND password=?",
+            (username, password)
+        ).fetchone()
         conn.close()
 
         if admin:
             session["admin_logged_in"] = True
             return redirect("/dashboard")
-        else:
-            return render_template("login.html", error="نام کاربری یا رمز عبور اشتباه است")
+
+        return render_template("login.html", error="اطلاعات اشتباه است")
 
     return render_template("login.html", error=None)
 
-# ---------- خروج ----------
 @app.route("/logout")
 def logout():
     session.pop("admin_logged_in", None)
     return redirect("/login")
 
-# ---------- محافظت از صفحات ----------
+# ---------- محافظ ----------
 def login_required(f):
-    from functools import wraps
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def wrapper(*args, **kwargs):
         if not session.get("admin_logged_in"):
             return redirect("/login")
         return f(*args, **kwargs)
-    return decorated_function
+    return wrapper
 
-# ---------- صفحه اصلی ----------
 @app.route("/")
 def index():
     return redirect("/login")
 
-# ---------- داشبورد مدیر ----------
+# ---------- داشبورد ----------
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -92,6 +95,7 @@ def dashboard():
     borrowed_count = conn.execute("SELECT COUNT(*) FROM books WHERE status='امانت'").fetchone()[0]
     free_count = conn.execute("SELECT COUNT(*) FROM books WHERE status='آزاد'").fetchone()[0]
     conn.close()
+
     return render_template(
         "dashboard.html",
         members_count=members_count,
@@ -109,70 +113,18 @@ def members():
     conn.close()
     return render_template("members.html", members=members)
 
-@app.route("/add_member", methods=["GET", "POST"])
+# 🔍 جستجوی اعضا
+@app.route("/search_members")
 @login_required
-def add_member():
-    if request.method == "POST":
-        name = request.form["name"]
-        code = request.form["code"]
-        grade = request.form["grade"]
-        phone = request.form["phone"]
-        photo = request.files["photo"]
-        photo_filename = None
-        if photo and photo.filename:
-            photo_filename = secure_filename(photo.filename)
-            photo.save(os.path.join(app.config["UPLOAD_FOLDER"], photo_filename))
-
-        conn = get_db_connection()
-        conn.execute("""
-            INSERT INTO members (name, code, grade, phone, photo_path)
-            VALUES (?, ?, ?, ?, ?)
-        """, (name, code, grade, phone, photo_filename))
-        conn.commit()
-        conn.close()
-        return redirect("/members")
-    return render_template("add_member.html")
-
-@app.route("/edit_member/<int:member_id>", methods=["GET", "POST"])
-@login_required
-def edit_member(member_id):
+def search_members():
+    q = request.args.get("q", "").strip()
     conn = get_db_connection()
-    member = conn.execute("SELECT * FROM members WHERE id=?", (member_id,)).fetchone()
-    if request.method == "POST":
-        name = request.form["name"]
-        code = request.form["code"]
-        grade = request.form["grade"]
-        phone = request.form["phone"]
-        photo = request.files["photo"]
-        photo_filename = member["photo_path"]
-        if photo and photo.filename:
-            photo_filename = secure_filename(photo.filename)
-            photo.save(os.path.join(app.config["UPLOAD_FOLDER"], photo_filename))
-
-        conn.execute("""
-            UPDATE members
-            SET name=?, code=?, grade=?, phone=?, photo_path=?
-            WHERE id=?
-        """, (name, code, grade, phone, photo_filename, member_id))
-        conn.commit()
-        conn.close()
-        return redirect("/members")
+    members = conn.execute("""
+        SELECT * FROM members
+        WHERE name LIKE ? OR code LIKE ? OR phone LIKE ?
+    """, (f"%{q}%", f"%{q}%", f"%{q}%")).fetchall()
     conn.close()
-    return render_template("edit_member.html", member=member)
-
-@app.route("/member/<int:member_id>")
-@login_required
-def member_detail(member_id):
-    conn = get_db_connection()
-    member = conn.execute("SELECT * FROM members WHERE id=?", (member_id,)).fetchone()
-    borrows = conn.execute("""
-        SELECT borrowings.id, books.title, borrow_date, return_date, status
-        FROM borrowings
-        JOIN books ON borrowings.book_id = books.id
-        WHERE member_id=?
-    """, (member_id,)).fetchall()
-    conn.close()
-    return render_template("member_detail.html", member=member, borrows=borrows)
+    return render_template("members.html", members=members, search=q)
 
 # ---------- کتاب‌ها ----------
 @app.route("/books")
@@ -183,43 +135,37 @@ def books():
     conn.close()
     return render_template("books.html", books=books)
 
+# 🔍 جستجوی کتاب
+@app.route("/search_books")
+@login_required
+def search_books():
+    q = request.args.get("q", "").strip()
+    conn = get_db_connection()
+    books = conn.execute("""
+        SELECT * FROM books
+        WHERE title LIKE ? OR subject LIKE ? OR shelf LIKE ?
+    """, (f"%{q}%", f"%{q}%", f"%{q}%")).fetchall()
+    conn.close()
+    return render_template("books.html", books=books, search=q)
+
+# ---------- افزودن کتاب ----------
 @app.route("/add_book", methods=["GET", "POST"])
 @login_required
 def add_book():
     if request.method == "POST":
-        title = request.form["title"]
-        subject = request.form["subject"]
-        shelf = request.form["shelf"]
-
         conn = get_db_connection()
         conn.execute("""
             INSERT INTO books (title, subject, shelf, status)
             VALUES (?, ?, ?, 'آزاد')
-        """, (title, subject, shelf))
+        """, (
+            request.form["title"],
+            request.form["subject"],
+            request.form["shelf"]
+        ))
         conn.commit()
         conn.close()
         return redirect("/books")
     return render_template("add_book.html", book=None)
-
-@app.route("/edit_book/<int:book_id>", methods=["GET", "POST"])
-@login_required
-def edit_book(book_id):
-    conn = get_db_connection()
-    book = conn.execute("SELECT * FROM books WHERE id=?", (book_id,)).fetchone()
-    if request.method == "POST":
-        title = request.form["title"]
-        subject = request.form["subject"]
-        shelf = request.form["shelf"]
-        conn.execute("""
-            UPDATE books
-            SET title=?, subject=?, shelf=?
-            WHERE id=?
-        """, (title, subject, shelf, book_id))
-        conn.commit()
-        conn.close()
-        return redirect("/books")
-    conn.close()
-    return render_template("add_book.html", book=book)
 
 # ---------- امانت ----------
 @app.route("/add_borrow_select")
@@ -235,6 +181,7 @@ def add_borrow_select():
 def add_borrow(member_id):
     conn = get_db_connection()
     books = conn.execute("SELECT * FROM books WHERE status='آزاد'").fetchall()
+
     if request.method == "POST":
         book_id = request.form["book_id"]
         conn.execute("""
@@ -244,10 +191,12 @@ def add_borrow(member_id):
         conn.execute("UPDATE books SET status='امانت' WHERE id=?", (book_id,))
         conn.commit()
         conn.close()
-        return redirect(url_for("member_detail", member_id=member_id))
-    conn.close()
-    return render_template("add_borrow.html", member_id=member_id, books=books)
+        return redirect(url_for("members"))
 
+    conn.close()
+    return render_template("add_borrow.html", books=books, member_id=member_id)
+
+# ---------- بازگرداندن ----------
 @app.route("/return_book/<int:borrow_id>/<int:book_id>")
 @login_required
 def return_book(borrow_id, book_id):
@@ -261,27 +210,6 @@ def return_book(borrow_id, book_id):
     conn.commit()
     conn.close()
     return redirect(request.referrer)
-
-# ---------- لیست کتاب‌های امانت داده شده ----------
-@app.route("/borrowed_books")
-@login_required
-def borrowed_books():
-    conn = get_db_connection()
-    books = conn.execute("SELECT books.id, books.title, members.name as member_name, borrowings.borrow_date "
-                         "FROM borrowings JOIN books ON borrowings.book_id = books.id "
-                         "JOIN members ON borrowings.member_id = members.id "
-                         "WHERE borrowings.status='امانت'").fetchall()
-    conn.close()
-    return render_template("borrowed_books.html", books=books)
-
-# ---------- لیست کتاب‌های آزاد ----------
-@app.route("/free_books")
-@login_required
-def free_books():
-    conn = get_db_connection()
-    books = conn.execute("SELECT * FROM books WHERE status='آزاد'").fetchall()
-    conn.close()
-    return render_template("books.html", books=books)
 
 # ---------- اجرا ----------
 if __name__ == "__main__":
