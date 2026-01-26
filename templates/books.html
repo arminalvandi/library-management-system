@@ -1,33 +1,8 @@
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-    <meta charset="UTF-8">
-    <title>لیست کتاب‌ها</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% extends "base.html" %}
 
-    <style>
-        .search-box {
-            margin: 15px 0;
-            text-align: right;
-        }
-        .search-box input {
-            width: 300px;
-            padding: 8px;
-        }
+{% block title %}لیست کتاب‌ها{% endblock %}
 
-        .filter-buttons {
-            margin-bottom: 15px;
-            text-align: right;
-        }
-        .filter-buttons button {
-            padding: 6px 12px;
-            margin-left: 5px;
-            cursor: pointer;
-        }
-    </style>
-</head>
-<body>
-
+{% block content %}
 <div class="page">
     <div class="page-header">
         <h1>📚 لیست کتاب‌ها</h1>
@@ -106,6 +81,4 @@
         });
     }
 </script>
-
-</body>
-</html>
+{% endblock %}
