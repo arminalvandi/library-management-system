@@ -6,15 +6,23 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <style>
-        /* استایل جست‌وجو */
         .search-box {
             margin: 15px 0;
             text-align: right;
         }
         .search-box input {
-            width: 320px;
+            width: 300px;
             padding: 8px;
-            font-size: 14px;
+        }
+
+        .filter-buttons {
+            margin-bottom: 15px;
+            text-align: right;
+        }
+        .filter-buttons button {
+            padding: 6px 12px;
+            margin-left: 5px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -26,10 +34,16 @@
         <a href="/add_book" class="btn add">➕ افزودن کتاب</a>
     </div>
 
-    <!-- جست‌وجوی کتاب -->
+    <!-- جست‌وجو -->
     <div class="search-box">
-        <label for="bookSearch">🔍 جست‌وجو: </label>
-        <input type="text" id="bookSearch" placeholder="نام کتاب، موضوع یا قفسه...">
+        <input type="text" id="bookSearch" placeholder="جست‌وجو بر اساس نام، موضوع یا قفسه...">
+    </div>
+
+    <!-- فیلتر وضعیت -->
+    <div class="filter-buttons">
+        <button onclick="filterStatus('all')">🔄 همه</button>
+        <button onclick="filterStatus('آزاد')">🟢 آزاد</button>
+        <button onclick="filterStatus('امانت')">🔴 امانت داده شده</button>
     </div>
 
     <table class="data-table" id="booksTable">
@@ -48,13 +62,7 @@
                 <td>{{ book.title }}</td>
                 <td>{{ book.subject }}</td>
                 <td>{{ book.shelf }}</td>
-                <td>
-                    {% if book.status == 'آزاد' %}
-                        🟢 آزاد
-                    {% else %}
-                        🔴 در امانت
-                    {% endif %}
-                </td>
+                <td>{{ book.status }}</td>
                 <td>
                     <a href="/edit_book/{{ book.id }}" class="btn edit">ویرایش</a>
                 </td>
@@ -65,29 +73,38 @@
 </div>
 
 <script>
-    // جست‌وجوی کتاب‌ها (Front-End)
     const searchInput = document.getElementById("bookSearch");
+    let currentFilter = "all";
 
-    searchInput.addEventListener("keyup", function () {
-        const filter = searchInput.value.toLowerCase();
+    searchInput.addEventListener("keyup", applyFilters);
+
+    function filterStatus(status) {
+        currentFilter = status;
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const filterText = searchInput.value.toLowerCase();
         const rows = document.querySelectorAll("#booksTable tbody tr");
 
         rows.forEach(row => {
             const title = row.cells[0].textContent.toLowerCase();
             const subject = row.cells[1].textContent.toLowerCase();
             const shelf = row.cells[2].textContent.toLowerCase();
+            const status = row.cells[3].textContent;
 
-            if (
-                title.includes(filter) ||
-                subject.includes(filter) ||
-                shelf.includes(filter)
-            ) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
-            }
+            const matchText =
+                title.includes(filterText) ||
+                subject.includes(filterText) ||
+                shelf.includes(filterText);
+
+            const matchStatus =
+                currentFilter === "all" ||
+                status.includes(currentFilter);
+
+            row.style.display = (matchText && matchStatus) ? "" : "none";
         });
-    });
+    }
 </script>
 
 </body>
