@@ -4,15 +4,13 @@
     <meta charset="UTF-8">
     <title>امانت‌ها</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-
     <style>
-        .search-box {
-            margin: 20px 0;
+        .filters {
+            margin-bottom: 20px;
             text-align: right;
         }
-        .search-box input, .search-box select {
-            padding: 8px;
-            font-size: 14px;
+        .filters input {
+            padding: 6px;
             margin-left: 10px;
         }
     </style>
@@ -22,16 +20,15 @@
 <div class="page">
     <h1>📚 لیست امانت‌ها</h1>
 
-    <div class="search-box">
+    <div class="filters">
         🔍 جست‌وجو:
-        <input type="text" id="searchInput" placeholder="نام عضو یا کتاب...">
+        <input type="text" id="searchInput" placeholder="نام عضو یا کتاب">
 
-        وضعیت:
-        <select id="statusFilter">
-            <option value="all">همه</option>
-            <option value="borrowed">در امانت</option>
-            <option value="returned">تحویل شده</option>
-        </select>
+        📅 از:
+        <input type="date" id="fromDate">
+
+        تا:
+        <input type="date" id="toDate">
     </div>
 
     <table class="data-table" id="loansTable">
@@ -45,13 +42,13 @@
         </thead>
         <tbody>
             {% for loan in loans %}
-            <tr data-status="{% if loan.return_date == None %}borrowed{% else %}returned{% endif %}">
+            <tr>
                 <td>{{ loan.member_name }}</td>
                 <td>{{ loan.book_title }}</td>
-                <td>{{ loan.loan_date }}</td>
+                <td class="loan-date">{{ loan.loan_date }}</td>
                 <td>
                     {% if loan.return_date == None %}
-                        <a href="/return_book/{{ loan.id }}" class="btn return">
+                        <a href="/return_book/{{ loan.id }}/{{ loan.book_id }}" class="btn return">
                             تحویل کتاب
                         </a>
                     {% else %}
@@ -66,30 +63,36 @@
 
 <script>
     const searchInput = document.getElementById("searchInput");
-    const statusFilter = document.getElementById("statusFilter");
+    const fromDate = document.getElementById("fromDate");
+    const toDate = document.getElementById("toDate");
     const rows = document.querySelectorAll("#loansTable tbody tr");
 
-    function filterTable() {
-        const searchValue = searchInput.value.toLowerCase();
-        const statusValue = statusFilter.value;
+    function filterLoans() {
+        const search = searchInput.value.toLowerCase();
+        const from = fromDate.value;
+        const to = toDate.value;
 
         rows.forEach(row => {
             const member = row.cells[0].textContent.toLowerCase();
             const book = row.cells[1].textContent.toLowerCase();
-            const status = row.getAttribute("data-status");
+            const loanDate = row.querySelector(".loan-date").textContent;
 
-            const matchesSearch =
-                member.includes(searchValue) || book.includes(searchValue);
+            let visible = true;
 
-            const matchesStatus =
-                statusValue === "all" || status === statusValue;
+            if (search && !(member.includes(search) || book.includes(search))) {
+                visible = false;
+            }
 
-            row.style.display = (matchesSearch && matchesStatus) ? "" : "none";
+            if (from && loanDate < from) visible = false;
+            if (to && loanDate > to) visible = false;
+
+            row.style.display = visible ? "" : "none";
         });
     }
 
-    searchInput.addEventListener("keyup", filterTable);
-    statusFilter.addEventListener("change", filterTable);
+    searchInput.addEventListener("keyup", filterLoans);
+    fromDate.addEventListener("change", filterLoans);
+    toDate.addEventListener("change", filterLoans);
 </script>
 
 </body>
