@@ -5,7 +5,6 @@
     <title>لیست اعضا</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <style>
-        /* استایل فیلد جست‌وجو */
         .search-box {
             margin-bottom: 20px;
             text-align: right;
@@ -14,6 +13,15 @@
             width: 300px;
             padding: 8px;
             font-size: 14px;
+        }
+        .pagination {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .pagination button {
+            padding: 6px 12px;
+            margin: 0 5px;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -60,24 +68,68 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <div class="pagination">
+        <button id="prevPage">⬅ قبلی</button>
+        <span id="pageInfo"></span>
+        <button id="nextPage">بعدی ➡</button>
+    </div>
 </div>
 
 <script>
-    // اسکریپت جست‌وجوی اعضا
+    const rowsPerPage = 10;
+    let currentPage = 1;
+
     const searchInput = document.getElementById("memberSearch");
-    searchInput.addEventListener("keyup", function() {
+    const table = document.getElementById("membersTable");
+    const rows = Array.from(table.querySelectorAll("tbody tr"));
+
+    function getFilteredRows() {
         const filter = searchInput.value.toLowerCase();
-        const rows = document.querySelectorAll("#membersTable tbody tr");
-        rows.forEach(row => {
+        return rows.filter(row => {
             const name = row.cells[1].textContent.toLowerCase();
             const code = row.cells[2].textContent.toLowerCase();
-            if(name.includes(filter) || code.includes(filter)) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
-            }
+            return name.includes(filter) || code.includes(filter);
         });
+    }
+
+    function renderTable() {
+        const filteredRows = getFilteredRows();
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage) || 1;
+
+        if (currentPage > totalPages) currentPage = totalPages;
+
+        rows.forEach(row => row.style.display = "none");
+
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+
+        filteredRows.slice(start, end).forEach(row => {
+            row.style.display = "";
+        });
+
+        document.getElementById("pageInfo").textContent =
+            `صفحه ${currentPage} از ${totalPages}`;
+    }
+
+    document.getElementById("prevPage").onclick = () => {
+        if (currentPage > 1) {
+            currentPage--;
+            renderTable();
+        }
+    };
+
+    document.getElementById("nextPage").onclick = () => {
+        currentPage++;
+        renderTable();
+    };
+
+    searchInput.addEventListener("keyup", () => {
+        currentPage = 1;
+        renderTable();
     });
+
+    renderTable();
 </script>
 
 </body>
