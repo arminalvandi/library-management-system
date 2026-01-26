@@ -2,26 +2,26 @@
 <html lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>➕ افزودن کتاب</title>
+    <title>{{ 'ویرایش کتاب' if book else '➕ افزودن کتاب' }}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
 
 <div class="page">
-    <h1>➕ افزودن کتاب</h1>
+    <h1>{{ 'ویرایش کتاب' if book else '➕ افزودن کتاب' }}</h1>
 
     <div class="form-card">
         <form method="POST">
             <label>نام کتاب</label>
-            <input type="text" name="title" required>
+            <input type="text" name="title" value="{{ book.title if book else '' }}" required>
 
             <label>موضوع</label>
-            <input type="text" name="subject" required>
+            <input type="text" name="subject" value="{{ book.subject if book else '' }}" required>
 
             <label>شماره قفسه</label>
-            <input type="text" name="shelf" required>
+            <input type="text" name="shelf" value="{{ book.shelf if book else '' }}" required>
 
-            <button type="submit" class="btn submit">ثبت</button>
+            <button type="submit" class="btn submit">{{ 'به‌روزرسانی' if book else 'ثبت' }}</button>
             <a href="/books" class="btn cancel">انصراف</a>
         </form>
     </div>
