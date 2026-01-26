@@ -85,15 +85,53 @@ def login_required(f):
 def index():
     return redirect("/login")
 
-# ---------- داشبورد ----------
+# ---------- داشبورد (مرحله ۶) ----------
 @app.route("/dashboard")
 @login_required
 def dashboard():
     conn = get_db_connection()
+
     members_count = conn.execute("SELECT COUNT(*) FROM members").fetchone()[0]
     books_count = conn.execute("SELECT COUNT(*) FROM books").fetchone()[0]
-    borrowed_count = conn.execute("SELECT COUNT(*) FROM books WHERE status='امانت'").fetchone()[0]
-    free_count = conn.execute("SELECT COUNT(*) FROM books WHERE status='آزاد'").fetchone()[0]
+    borrowed_count = conn.execute(
+        "SELECT COUNT(*) FROM books WHERE status='امانت'"
+    ).fetchone()[0]
+    free_count = conn.execute(
+        "SELECT COUNT(*) FROM books WHERE status='آزاد'"
+    ).fetchone()[0]
+
+    # 📅 امانت‌های امروز
+    today_borrows = conn.execute("""
+        SELECT COUNT(*) FROM borrowings
+        WHERE borrow_date = ?
+    """, (date.today().isoformat(),)).fetchone()[0]
+
+    # ⏰ امانت‌های فعال
+    active_borrows = conn.execute("""
+        SELECT COUNT(*) FROM borrowings
+        WHERE status = 'امانت'
+    """).fetchone()[0]
+
+    # 👤 بیشترین امانت‌گیرنده
+    top_member = conn.execute("""
+        SELECT members.name, COUNT(*) as total
+        FROM borrowings
+        JOIN members ON borrowings.member_id = members.id
+        GROUP BY member_id
+        ORDER BY total DESC
+        LIMIT 1
+    """).fetchone()
+
+    # 📚 بیشترین امانت‌شده
+    top_book = conn.execute("""
+        SELECT books.title, COUNT(*) as total
+        FROM borrowings
+        JOIN books ON borrowings.book_id = books.id
+        GROUP BY book_id
+        ORDER BY total DESC
+        LIMIT 1
+    """).fetchone()
+
     conn.close()
 
     return render_template(
@@ -101,7 +139,11 @@ def dashboard():
         members_count=members_count,
         books_count=books_count,
         borrowed_count=borrowed_count,
-        free_count=free_count
+        free_count=free_count,
+        today_borrows=today_borrows,
+        active_borrows=active_borrows,
+        top_member=top_member,
+        top_book=top_book
     )
 
 # ---------- اعضا ----------
@@ -113,7 +155,6 @@ def members():
     conn.close()
     return render_template("members.html", members=members)
 
-# 🔍 جستجوی اعضا
 @app.route("/search_members")
 @login_required
 def search_members():
@@ -135,7 +176,6 @@ def books():
     conn.close()
     return render_template("books.html", books=books)
 
-# 🔍 جستجوی کتاب
 @app.route("/search_books")
 @login_required
 def search_books():
@@ -191,7 +231,7 @@ def add_borrow(member_id):
         conn.execute("UPDATE books SET status='امانت' WHERE id=?", (book_id,))
         conn.commit()
         conn.close()
-        return redirect(url_for("members"))
+        return redirect("/members")
 
     conn.close()
     return render_template("add_borrow.html", books=books, member_id=member_id)
