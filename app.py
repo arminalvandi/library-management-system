@@ -27,57 +27,64 @@ def get_db_connection():
 def init_admin():
     conn = get_db_connection()
     conn.execute("""
-        CREATE TABLE IF NOT EXISTS admins (
+        CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    admin = conn.execute("SELECT * FROM admins WHERE username='admin'").fetchone()
+    admin = conn.execute("SELECT * FROM users WHERE username='admin'").fetchone()
     if not admin:
         hashed = hashlib.sha256("1234".encode()).hexdigest()
         conn.execute(
-            "INSERT INTO admins (username, password) VALUES (?, ?)",
+            "INSERT INTO users (username, password_hash) VALUES (?, ?)",
             ("admin", hashed)
         )
     conn.commit()
     conn.close()
 
-# ---------- جدول‌های اعضا، کتاب‌ها، امانت ----------
+# ---------- جدول‌ها ----------
 def init_tables():
     conn = get_db_connection()
     # اعضا
     conn.execute("""
         CREATE TABLE IF NOT EXISTS members (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT,
-            code TEXT UNIQUE,
+            full_name TEXT NOT NULL,
+            student_code TEXT UNIQUE,
             grade TEXT,
             phone TEXT,
-            photo TEXT
+            photo_path TEXT,
+            status TEXT DEFAULT 'active',
+            is_deleted INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     """)
     # کتاب‌ها
     conn.execute("""
         CREATE TABLE IF NOT EXISTS books (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT,
-            subject TEXT,
-            shelf TEXT,
-            status TEXT
+            title TEXT NOT NULL,
+            author TEXT,
+            category TEXT,
+            status TEXT DEFAULT 'آزاد',
+            is_deleted INTEGER DEFAULT 0,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     """)
     # امانت‌ها
     conn.execute("""
-        CREATE TABLE IF NOT EXISTS borrowings (
+        CREATE TABLE IF NOT EXISTS loans (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            member_id INTEGER,
-            book_id INTEGER,
-            borrow_date TEXT,
-            return_date TEXT,
-            status TEXT,
-            FOREIGN KEY(member_id) REFERENCES members(id),
-            FOREIGN KEY(book_id) REFERENCES books(id)
+            member_id INTEGER NOT NULL,
+            book_id INTEGER NOT NULL,
+            loan_date DATE DEFAULT CURRENT_DATE,
+            return_date DATE,
+            status TEXT DEFAULT 'active',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (member_id) REFERENCES members(id),
+            FOREIGN KEY (book_id) REFERENCES books(id)
         )
     """)
     conn.commit()
@@ -100,14 +107,11 @@ def login_required(f):
 def login():
     if request.method == "POST":
         username = request.form["username"]
-        password = hashlib.sha256(request.form["password"].encode()).hexdigest()
+        password_hash = hashlib.sha256(request.form["password"].encode()).hexdigest()
         conn = get_db_connection()
-        admin = conn.execute(
-            "SELECT * FROM admins WHERE username=? AND password=?",
-            (username, password)
-        ).fetchone()
+        user = conn.execute("SELECT * FROM users WHERE username=? AND password_hash=?", (username, password_hash)).fetchone()
         conn.close()
-        if admin:
+        if user:
             session["admin_logged_in"] = True
             return redirect("/dashboard")
         return render_template("login.html", error="اطلاعات اشتباه است")
@@ -127,18 +131,19 @@ def index():
 @login_required
 def dashboard():
     conn = get_db_connection()
-    members_count = conn.execute("SELECT COUNT(*) FROM members").fetchone()[0]
-    books_count = conn.execute("SELECT COUNT(*) FROM books").fetchone()[0]
-    borrowed_count = conn.execute("SELECT COUNT(*) FROM books WHERE status='امانت'").fetchone()[0]
-    free_count = conn.execute("SELECT COUNT(*) FROM books WHERE status='آزاد'").fetchone()[0]
+    members_count = conn.execute("SELECT COUNT(*) FROM members WHERE is_deleted=0").fetchone()[0]
+    books_count = conn.execute("SELECT COUNT(*) FROM books WHERE is_deleted=0").fetchone()[0]
+    borrowed_count = conn.execute("SELECT COUNT(*) FROM loans WHERE status='active'").fetchone()[0]
+    free_count = books_count - borrowed_count
 
-    today_borrows = conn.execute("SELECT COUNT(*) FROM borrowings WHERE borrow_date=?", (date.today().isoformat(),)).fetchone()[0]
-    active_borrows = conn.execute("SELECT COUNT(*) FROM borrowings WHERE status='امانت'").fetchone()[0]
+    today_borrows = conn.execute("SELECT COUNT(*) FROM loans WHERE loan_date=?", (date.today().isoformat(),)).fetchone()[0]
+    active_borrows = borrowed_count
 
     top_member = conn.execute("""
-        SELECT members.name, COUNT(*) as total
-        FROM borrowings
-        JOIN members ON borrowings.member_id = members.id
+        SELECT members.full_name, COUNT(*) as total
+        FROM loans
+        JOIN members ON loans.member_id = members.id
+        WHERE members.is_deleted=0
         GROUP BY member_id
         ORDER BY total DESC
         LIMIT 1
@@ -146,8 +151,9 @@ def dashboard():
 
     top_book = conn.execute("""
         SELECT books.title, COUNT(*) as total
-        FROM borrowings
-        JOIN books ON borrowings.book_id = books.id
+        FROM loans
+        JOIN books ON loans.book_id = books.id
+        WHERE books.is_deleted=0
         GROUP BY book_id
         ORDER BY total DESC
         LIMIT 1
@@ -171,7 +177,7 @@ def dashboard():
 @login_required
 def members():
     conn = get_db_connection()
-    members = conn.execute("SELECT * FROM members").fetchall()
+    members = conn.execute("SELECT * FROM members WHERE is_deleted=0").fetchall()
     conn.close()
     return render_template("members.html", members=members)
 
@@ -180,7 +186,8 @@ def members():
 def search_members():
     q = request.args.get("q", "").strip()
     conn = get_db_connection()
-    members = conn.execute("SELECT * FROM members WHERE name LIKE ? OR code LIKE ? OR phone LIKE ?", (f"%{q}%", f"%{q}%", f"%{q}%")).fetchall()
+    members = conn.execute("SELECT * FROM members WHERE (full_name LIKE ? OR student_code LIKE ? OR phone LIKE ?) AND is_deleted=0",
+                           (f"%{q}%", f"%{q}%", f"%{q}%")).fetchall()
     conn.close()
     return render_template("members.html", members=members, search=q)
 
@@ -188,8 +195,8 @@ def search_members():
 @login_required
 def add_member():
     if request.method == "POST":
-        name = request.form["name"]
-        code = request.form["code"]
+        full_name = request.form["name"]
+        student_code = request.form["code"]
         grade = request.form["grade"]
         phone = request.form["phone"]
         photo_file = request.files.get("photo")
@@ -198,31 +205,30 @@ def add_member():
             filename = secure_filename(photo_file.filename)
             photo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
         conn = get_db_connection()
-        conn.execute("INSERT INTO members (name, code, grade, phone, photo) VALUES (?, ?, ?, ?, ?)",
-                     (name, code, grade, phone, filename))
+        conn.execute("INSERT INTO members (full_name, student_code, grade, phone, photo_path) VALUES (?, ?, ?, ?, ?)",
+                     (full_name, student_code, grade, phone, filename))
         conn.commit()
         conn.close()
         return redirect("/members")
     return render_template("add_member.html")
 
-# ---------- ویرایش عضو ----------
 @app.route("/edit_member/<int:member_id>", methods=["GET", "POST"])
 @login_required
 def edit_member(member_id):
     conn = get_db_connection()
     member = conn.execute("SELECT * FROM members WHERE id=?", (member_id,)).fetchone()
     if request.method == "POST":
-        name = request.form["name"]
-        code = request.form["code"]
+        full_name = request.form["name"]
+        student_code = request.form["code"]
         grade = request.form["grade"]
         phone = request.form["phone"]
         photo_file = request.files.get("photo")
-        filename = member["photo"]
+        filename = member["photo_path"]
         if photo_file and photo_file.filename:
             filename = secure_filename(photo_file.filename)
             photo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-        conn.execute("UPDATE members SET name=?, code=?, grade=?, phone=?, photo=? WHERE id=?",
-                     (name, code, grade, phone, filename, member_id))
+        conn.execute("UPDATE members SET full_name=?, student_code=?, grade=?, phone=?, photo_path=? WHERE id=?",
+                     (full_name, student_code, grade, phone, filename, member_id))
         conn.commit()
         conn.close()
         return redirect("/members")
@@ -234,7 +240,7 @@ def edit_member(member_id):
 @login_required
 def books():
     conn = get_db_connection()
-    books = conn.execute("SELECT * FROM books").fetchall()
+    books = conn.execute("SELECT * FROM books WHERE is_deleted=0").fetchall()
     conn.close()
     return render_template("books.html", books=books)
 
@@ -243,7 +249,7 @@ def books():
 def search_books():
     q = request.args.get("q", "").strip()
     conn = get_db_connection()
-    books = conn.execute("SELECT * FROM books WHERE title LIKE ? OR subject LIKE ? OR shelf LIKE ?",
+    books = conn.execute("SELECT * FROM books WHERE (title LIKE ? OR author LIKE ? OR category LIKE ?) AND is_deleted=0",
                          (f"%{q}%", f"%{q}%", f"%{q}%")).fetchall()
     conn.close()
     return render_template("books.html", books=books, search=q)
@@ -252,9 +258,12 @@ def search_books():
 @login_required
 def add_book():
     if request.method == "POST":
+        title = request.form["title"]
+        author = request.form["subject"]
+        category = request.form["shelf"]
         conn = get_db_connection()
-        conn.execute("INSERT INTO books (title, subject, shelf, status) VALUES (?, ?, ?, 'آزاد')",
-                     (request.form["title"], request.form["subject"], request.form["shelf"]))
+        conn.execute("INSERT INTO books (title, author, category, status) VALUES (?, ?, ?, 'آزاد')",
+                     (title, author, category))
         conn.commit()
         conn.close()
         return redirect("/books")
@@ -267,9 +276,9 @@ def edit_book(book_id):
     book = conn.execute("SELECT * FROM books WHERE id=?", (book_id,)).fetchone()
     if request.method == "POST":
         title = request.form["title"]
-        subject = request.form["subject"]
-        shelf = request.form["shelf"]
-        conn.execute("UPDATE books SET title=?, subject=?, shelf=? WHERE id=?", (title, subject, shelf, book_id))
+        author = request.form["subject"]
+        category = request.form["shelf"]
+        conn.execute("UPDATE books SET title=?, author=?, category=? WHERE id=?", (title, author, category, book_id))
         conn.commit()
         conn.close()
         return redirect("/books")
@@ -281,7 +290,7 @@ def edit_book(book_id):
 @login_required
 def add_borrow_select():
     conn = get_db_connection()
-    members = conn.execute("SELECT * FROM members").fetchall()
+    members = conn.execute("SELECT * FROM members WHERE is_deleted=0").fetchall()
     conn.close()
     return render_template("select_member.html", members=members)
 
@@ -289,10 +298,10 @@ def add_borrow_select():
 @login_required
 def add_borrow(member_id):
     conn = get_db_connection()
-    books = conn.execute("SELECT * FROM books WHERE status='آزاد'").fetchall()
+    books = conn.execute("SELECT * FROM books WHERE status='آزاد' AND is_deleted=0").fetchall()
     if request.method == "POST":
         book_id = request.form["book_id"]
-        conn.execute("INSERT INTO borrowings (member_id, book_id, borrow_date, status) VALUES (?, ?, ?, 'امانت')",
+        conn.execute("INSERT INTO loans (member_id, book_id, loan_date, status) VALUES (?, ?, ?, 'active')",
                      (member_id, book_id, date.today().isoformat()))
         conn.execute("UPDATE books SET status='امانت' WHERE id=?", (book_id,))
         conn.commit()
@@ -301,23 +310,21 @@ def add_borrow(member_id):
     conn.close()
     return render_template("add_borrow.html", books=books, member_id=member_id)
 
-@app.route("/return_book/<int:borrow_id>/<int:book_id>")
+@app.route("/return_book/<int:loan_id>/<int:book_id>")
 @login_required
-def return_book(borrow_id, book_id):
+def return_book(loan_id, book_id):
     conn = get_db_connection()
-    conn.execute("UPDATE borrowings SET return_date=?, status='تحویل شده' WHERE id=?",
-                 (date.today().isoformat(), borrow_id))
+    conn.execute("UPDATE loans SET return_date=?, status='returned' WHERE id=?", (date.today().isoformat(), loan_id))
     conn.execute("UPDATE books SET status='آزاد' WHERE id=?", (book_id,))
     conn.commit()
     conn.close()
     return redirect(request.referrer)
 
-# ---------- فیلتر کتاب‌ها ----------
 @app.route("/borrowed_books")
 @login_required
 def borrowed_books():
     conn = get_db_connection()
-    books = conn.execute("SELECT * FROM books WHERE status='امانت'").fetchall()
+    books = conn.execute("SELECT * FROM books WHERE status='امانت' AND is_deleted=0").fetchall()
     conn.close()
     return render_template("books.html", books=books)
 
@@ -325,7 +332,7 @@ def borrowed_books():
 @login_required
 def free_books():
     conn = get_db_connection()
-    books = conn.execute("SELECT * FROM books WHERE status='آزاد'").fetchall()
+    books = conn.execute("SELECT * FROM books WHERE status='آزاد' AND is_deleted=0").fetchall()
     conn.close()
     return render_template("books.html", books=books)
 
