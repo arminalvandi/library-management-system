@@ -3,39 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <title>امانت‌ها</title>
-    <link rel="stylesheet" href="../static/css/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        .search-box {
+            margin: 20px 0;
+            text-align: right;
+        }
+        .search-box input, .search-box select {
+            padding: 8px;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+    </style>
 </head>
 <body>
 
-<h1>📚 لیست امانت‌ها</h1>
+<div class="page">
+    <h1>📚 لیست امانت‌ها</h1>
 
-<a href="/add_loan" class="btn">➕ ثبت امانت</a>
+    <div class="search-box">
+        🔍 جست‌وجو:
+        <input type="text" id="searchInput" placeholder="نام عضو یا کتاب...">
 
-<table>
-    <tr>
-        <th>عضو</th>
-        <th>کتاب</th>
-        <th>تاریخ امانت</th>
-        <th>وضعیت</th>
-    </tr>
+        وضعیت:
+        <select id="statusFilter">
+            <option value="all">همه</option>
+            <option value="borrowed">در امانت</option>
+            <option value="returned">تحویل شده</option>
+        </select>
+    </div>
 
-    {% for loan in loans %}
-    <tr>
-        <td>{{ loan.member_name }}</td>
-        <td>{{ loan.book_title }}</td>
-        <td>{{ loan.loan_date }}</td>
-        <td>
-            {% if loan.return_date == None %}
-                <a href="/return_book/{{ loan.id }}" class="btn return">
-                    تحویل کتاب
-                </a>
-            {% else %}
-                ✔ تحویل شده
-            {% endif %}
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+    <table class="data-table" id="loansTable">
+        <thead>
+            <tr>
+                <th>عضو</th>
+                <th>کتاب</th>
+                <th>تاریخ امانت</th>
+                <th>وضعیت</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for loan in loans %}
+            <tr data-status="{% if loan.return_date == None %}borrowed{% else %}returned{% endif %}">
+                <td>{{ loan.member_name }}</td>
+                <td>{{ loan.book_title }}</td>
+                <td>{{ loan.loan_date }}</td>
+                <td>
+                    {% if loan.return_date == None %}
+                        <a href="/return_book/{{ loan.id }}" class="btn return">
+                            تحویل کتاب
+                        </a>
+                    {% else %}
+                        ✔ تحویل شده
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    const searchInput = document.getElementById("searchInput");
+    const statusFilter = document.getElementById("statusFilter");
+    const rows = document.querySelectorAll("#loansTable tbody tr");
+
+    function filterTable() {
+        const searchValue = searchInput.value.toLowerCase();
+        const statusValue = statusFilter.value;
+
+        rows.forEach(row => {
+            const member = row.cells[0].textContent.toLowerCase();
+            const book = row.cells[1].textContent.toLowerCase();
+            const status = row.getAttribute("data-status");
+
+            const matchesSearch =
+                member.includes(searchValue) || book.includes(searchValue);
+
+            const matchesStatus =
+                statusValue === "all" || status === statusValue;
+
+            row.style.display = (matchesSearch && matchesStatus) ? "" : "none";
+        });
+    }
+
+    searchInput.addEventListener("keyup", filterTable);
+    statusFilter.addEventListener("change", filterTable);
+</script>
 
 </body>
 </html>
