@@ -2,7 +2,7 @@
 <html lang="fa">
 <head>
     <meta charset="UTF-8">
-    <title>ثبت امانت کتاب</title>
+    <title>📚 ثبت امانت جدید</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -13,12 +13,16 @@
     <form method="post">
         <label>انتخاب کتاب</label>
         <select name="book_id" required>
-            {% for book in books %}
-                <option value="{{ book.id }}">{{ book.title }}</option>
-            {% endfor %}
+            {% if books %}
+                {% for book in books %}
+                    <option value="{{ book.id }}">{{ book.title }}</option>
+                {% endfor %}
+            {% else %}
+                <option disabled>کتابی برای امانت موجود نیست</option>
+            {% endif %}
         </select>
 
-        <button type="submit" class="btn">ثبت امانت</button>
+        <button type="submit" class="btn submit">ثبت امانت</button>
         <a href="/member/{{ member_id }}" class="btn cancel">انصراف</a>
     </form>
 </div>
