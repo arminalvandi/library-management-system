@@ -292,7 +292,7 @@ def add_borrow_select():
     conn = get_db_connection()
     members = conn.execute("SELECT * FROM members WHERE is_deleted=0").fetchall()
     conn.close()
-    return render_template("select_member.html", members=members)
+    return render_template("add_borrow_global.html", members=members)
 
 @app.route("/add_borrow/<int:member_id>", methods=["GET", "POST"])
 @login_required
